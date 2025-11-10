@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DropSpark — Trendy Finds, Fast Ship</title>
+  <meta name="description" content="DropSpark — a lightweight, ready-to-deploy dropship storefront with 25 trending products, cart, and email-based supplier handoff." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='24' fill='%23000000'/%3E%3Cpath d='M88 34L56 66l-16-16-16 16' stroke='%23ffffff' stroke-width='10' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='88' cy='40' r='12' fill='%23FFCC00'/%3E%3C/svg%3E"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body { height: 100%; }
+    .card:hover { transform: translateY(-2px); }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-neutral-50 text-neutral-900 antialiased">
+  <div id="app" class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-neutral-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
+        <div class="flex items-center gap-3">
+          <svg width="36" height="36" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" class="shrink-0">
+            <rect width="128" height="128" rx="24" fill="black"/>
+            <path d="M88 34L56 66l-16-16-16 16" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="88" cy="40" r="12" fill="#FFCC00"/>
+          </svg>
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight">DropSpark</h1>
+            <p class="text-sm text-neutral-500 -mt-1">Trendy finds • Built for fast dropship handoff</p>
+          </div>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <input id="searchInput" type="search" placeholder="Search products…" class="w-56 sm:w-72 rounded-xl border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-800" />
+          <button id="openCart" class="relative rounded-xl border px-4 py-2 text-sm font-medium hover:bg-neutral-100">
+            Cart <span id="cartCount" class="ml-1 inline-block min-w-[1.5rem] text-center rounded-lg bg-black text-white text-xs px-1">0</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="bg-gradient-to-br from-neutral-900 to-neutral-700 text-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid md:grid-cols-2 gap-8 items-center">
+        <div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold leading-tight">Launch-ready dropship store — no code backend needed.</h2>
+          <p class="mt-3 text-neutral-200">Add products, set your margin, and send clean, pre-filled purchase orders to your supplier in one click. Keep the profit — we do the math.</p>
+          <div class="mt-5 flex items-center gap-3 text-sm">
+            <span class="inline-block rounded-full bg-white/10 px-3 py-1">Email-based handoff</span>
+            <span class="inline-block rounded-full bg-white/10 px-3 py-1">Auto profit calc</span>
+            <span class="inline-block rounded-full bg-white/10 px-3 py-1">Static, deploy anywhere</span>
+          </div>
+        </div>
+        <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
+          <div class="text-xs text-white/80">Quick Config</div>
+          <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3 text-neutral-900">
+            <label class="text-sm">Your email
+              <input id="ownerEmail" class="mt-1 w-full rounded-xl border px-3 py-2" placeholder="you@yourstore.com" value="owner@dropspark.store"/>
+            </label>
+            <label class="text-sm">Supplier email
+              <input id="supplierEmail" class="mt-1 w-full rounded-xl border px-3 py-2" placeholder="orders@supplier.com" value="supplier@example.com"/>
+            </label>
+            <label class="text-sm">Default margin (%)
+              <input id="defaultMargin" type="number" class="mt-1 w-full rounded-xl border px-3 py-2" value="40"/>
+            </label>
+            <label class="text-sm">Store name
+              <input id="storeName" class="mt-1 w-full rounded-xl border px-3 py-2" value="DropSpark"/>
+            </label>
+          </div>
+          <p class="mt-3 text-xs text-white/70">Tip: You can set per‑product prices too. This section just sets defaults you can change anytime.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Products -->
+    <main class="flex-1">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="mb-6 flex items-center justify-between">
+          <h3 class="text-xl font-semibold">Featured Products <span class="text-neutral-500 text-base" id="visibleCount"></span></h3>
+          <div class="flex items-center gap-2 text-sm">
+            <label class="inline-flex items-center gap-2">Sort
+              <select id="sortSelect" class="rounded-xl border px-3 py-2 text-sm">
+                <option value="popularity">Popularity</option>
+                <option value="priceAsc">Price: Low to High</option>
+                <option value="priceDesc">Price: High to Low</option>
+                <option value="marginDesc">Profit: High to Low</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div id="grid" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t border-neutral-200 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-sm text-neutral-600 flex flex-col sm:flex-row items-center gap-3 justify-between">
+        <div>© <span id="year"></span> <span class="font-medium">DropSpark</span>. Built as a ready-to-deploy dropship template.</div>
+        <div class="flex items-center gap-3">
+          <a href="#" class="hover:text-neutral-900">Privacy</a>
+          <span class="text-neutral-300">•</span>
+          <a href="#" class="hover:text-neutral-900">Terms</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div id="cartDrawer" class="fixed inset-y-0 right-0 w-full sm:w-[440px] bg-white shadow-2xl border-l border-neutral-200 translate-x-full transition-transform duration-300 z-50 flex flex-col">
+    <div class="p-4 border-b flex items-center justify-between">
+      <h4 class="text-lg font-semibold">Your Cart</h4>
+      <button id="closeCart" class="rounded-xl border px-3 py-1.5 text-sm hover:bg-neutral-50">Close</button>
+    </div>
+    <div id="cartItems" class="flex-1 overflow-y-auto p-4 scrollbar-hide"></div>
+    <div class="border-t p-4 space-y-2">
+      <div class="flex items-center justify-between text-sm"><span>Subtotal</span><span id="subTotal" class="font-medium">$0.00</span></div>
+      <div class="flex items-center justify-between text-sm"><span>Estimated Profit</span><span id="profitTotal" class="font-medium">$0.00</span></div>
+      <button id="checkoutBtn" class="w-full rounded-xl bg-black text-white py-3 font-semibold">Checkout</button>
+      <p class="text-xs text-neutral-500">Taxes & shipping are handled between you and the supplier during handoff.</p>
+    </div>
+  </div>
+
+  <!-- Checkout Modal -->
+  <div id="checkoutModal" class="fixed inset-0 bg-black/30 hidden z-50 items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl">
+      <div class="p-4 border-b flex items-center justify-between">
+        <h4 class="text-lg font-semibold">Checkout — Customer Details</h4>
+        <button id="closeCheckout" class="rounded-xl border px-3 py-1.5 text-sm hover:bg-neutral-50">Close</button>
+      </div>
+      <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <label class="text-sm">Full name<input id="custName" class="mt-1 w-full rounded-xl border px-3 py-2" placeholder="Jane Doe"/></label>
+        <label class="text-sm">Email<input id="custEmail" class="mt-1 w-full rounded-xl border px-3 py-2" placeholder="jane@example.com"/></label>
+        <label class="text-sm sm:col-span-2">Address<input id="custAddress" class="mt-1 w-full rounded-xl border px-3 py-2" placeholder="123 Main St, City, ST 00000"/></label>
+        <label class="text-sm">Phone<input id="custPhone" class="mt-1 w-full rounded-xl border px-3 py-2" placeholder="(555) 123-4567"/></label>
+        <label class="text-sm">Notes (optional)<textarea id="custNotes" class="mt-1 w-full rounded-xl border px-3 py-2" rows="2" placeholder="Color/size, delivery notes, etc."></textarea></label>
+      </div>
+      <div class="p-4 border-t space-y-3">
+        <div class="text-sm text-neutral-600">When you click <span class="font-medium">Generate Supplier Order</span>, we'll prepare an email draft with product SKUs, quantities, and the customer's shipping details.
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="supplierEmailBtn" class="rounded-xl border px-4 py-2 font-medium hover:bg-neutral-50">Generate Supplier Order</button>
+          <button id="ownerEmailBtn" class="rounded-xl border px-4 py-2 font-medium hover:bg-neutral-50">Send Receipt to Me</button>
+          <button id="copyPOBtn" class="rounded-xl border px-4 py-2 font-medium hover:bg-neutral-50">Copy PO Text</button>
+        </div>
+        <textarea id="poPreview" class="w-full rounded-xl border px-3 py-2 text-sm h-40" placeholder="Purchase Order preview will appear here…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- CONFIG --- //
+    const state = {
+      ownerEmail: 'owner@dropspark.store',
+      supplierEmail: 'supplier@example.com',
+      defaultMarginPct: 40,
+      storeName: 'DropSpark',
+      cart: [],
+    };
+
+    const products = [
+      // NOTE: Replace supplierLink with your actual supplier product URLs.
+      { id: 'BLND-001', title: 'Portable USB Blender', img: 'https://images.unsplash.com/photo-1586201375761-83865001e31b?q=80&w=800&auto=format&fit=crop', supplierCost: 19.00, price: 0, supplierLink: 'https://example.com/supplier/portable-blender', popularity: 95 },
+      { id: 'PROJ-002', title: 'LED Galaxy Projector', img: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800&auto=format&fit=crop', supplierCost: 21.50, price: 0, supplierLink: 'https://example.com/supplier/galaxy-projector', popularity: 92 },
+      { id: 'POST-003', title: 'Posture Corrector', img: 'https://images.unsplash.com/photo-1556228724-4c7f8e3f35e1?q=80&w=800&auto=format&fit=crop', supplierCost: 8.40, price: 0, supplierLink: 'https://example.com/supplier/posture-corrector', popularity: 88 },
+      { id: 'PETR-004', title: 'Pet Hair Remover Roller', img: 'https://images.unsplash.com/photo-1558944351-c6ae44b5be17?q=80&w=800&auto=format&fit=crop', supplierCost: 6.20, price: 0, supplierLink: 'https://example.com/supplier/pet-hair-roller', popularity: 93 },
+      { id: 'VACU-005', title: 'Mini Car Vacuum', img: 'https://images.unsplash.com/photo-1623607915241-5b0b0521a457?q=80&w=800&auto=format&fit=crop', supplierCost: 13.75, price: 0, supplierLink: 'https://example.com/supplier/mini-car-vacuum', popularity: 86 },
+      { id: 'BUDS-006', title: 'Wireless Earbuds', img: 'https://images.unsplash.com/photo-1518441734319-c7f74b5f6d72?q=80&w=800&auto=format&fit=crop', supplierCost: 16.90, price: 0, supplierLink: 'https://example.com/supplier/wireless-earbuds', popularity: 91 },
+      { id: 'TRAK-007', title: 'Bluetooth Smart Tracker', img: 'https://images.unsplash.com/photo-1518449007433-4e3780e7d1a2?q=80&w=800&auto=format&fit=crop', supplierCost: 7.80, price: 0, supplierLink: 'https://example.com/supplier/smart-tracker', popularity: 84 },
+      { id: 'TRIP-008', title: 'Phone Tripod Stand', img: 'https://images.unsplash.com/photo-1498038432885-c6f3f1e0b3c5?q=80&w=800&auto=format&fit=crop', supplierCost: 9.30, price: 0, supplierLink: 'https://example.com/supplier/phone-tripod', popularity: 83 },
+      { id: 'MKUP-009', title: 'Rotating Makeup Organizer', img: 'https://images.unsplash.com/photo-1616394584738-d132685e4d0f?q=80&w=800&auto=format&fit=crop', supplierCost: 12.60, price: 0, supplierLink: 'https://example.com/supplier/makeup-organizer', popularity: 85 },
+      { id: 'BAMB-010', title: 'Bamboo Toothbrush Set', img: 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?q=80&w=800&auto=format&fit=crop', supplierCost: 4.20, price: 0, supplierLink: 'https://example.com/supplier/bamboo-toothbrush', popularity: 80 },
+      { id: 'WBLN-011', title: 'Reusable Water Balloons (12‑pack)', img: 'https://images.unsplash.com/photo-1552055568-47c2f4c2486f?q=80&w=800&auto=format&fit=crop', supplierCost: 10.50, price: 0, supplierLink: 'https://example.com/supplier/water-balloons', popularity: 89 },
+      { id: 'DIFF-012', title: 'Aromatherapy Diffuser', img: 'https://images.unsplash.com/photo-1519667914006-0f6a2a9b0a1b?q=80&w=800&auto=format&fit=crop', supplierCost: 14.80, price: 0, supplierLink: 'https://example.com/supplier/diffuser', popularity: 87 },
+      { id: 'LEDL-013', title: 'RGB LED Strip Lights', img: 'https://images.unsplash.com/photo-1605264964350-96f77c5239a1?q=80&w=800&auto=format&fit=crop', supplierCost: 11.20, price: 0, supplierLink: 'https://example.com/supplier/led-strip', popularity: 94 },
+      { id: 'MNPR-014', title: 'Portable Mini Projector', img: 'https://images.unsplash.com/photo-1512813195386-6cf811ad3542?q=80&w=800&auto=format&fit=crop', supplierCost: 45.00, price: 0, supplierLink: 'https://example.com/supplier/mini-projector', popularity: 90 },
+      { id: 'DSKV-015', title: 'Desktop Mini Vacuum', img: 'https://images.unsplash.com/photo-1586201375761-83865001e31b?q=80&w=800&auto=format&fit=crop', supplierCost: 8.90, price: 0, supplierLink: 'https://example.com/supplier/desk-vacuum', popularity: 82 },
+      { id: 'LINT-016', title: 'Rechargeable Lint Remover', img: 'https://images.unsplash.com/photo-1523381294911-8d3cead13475?q=80&w=800&auto=format&fit=crop', supplierCost: 9.80, price: 0, supplierLink: 'https://example.com/supplier/lint-remover', popularity: 83 },
+      { id: 'ICER-017', title: 'Stainless Ice Roller', img: 'https://images.unsplash.com/photo-1629198735660-a56b7a756d34?q=80&w=800&auto=format&fit=crop', supplierCost: 7.60, price: 0, supplierLink: 'https://example.com/supplier/ice-roller', popularity: 86 },
+      { id: 'CURL-018', title: 'Auto Hair Curler', img: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=800&auto=format&fit=crop', supplierCost: 23.40, price: 0, supplierLink: 'https://example.com/supplier/hair-curler', popularity: 88 },
+      { id: 'BLUE-019', title: 'Blue Light Glasses', img: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=800&auto=format&fit=crop', supplierCost: 5.20, price: 0, supplierLink: 'https://example.com/supplier/blue-light-glasses', popularity: 78 },
+      { id: 'BAND-020', title: 'Resistance Bands Set', img: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?q=80&w=800&auto=format&fit=crop', supplierCost: 9.60, price: 0, supplierLink: 'https://example.com/supplier/resistance-bands', popularity: 90 },
+      { id: 'NECK-021', title: 'Heated Neck Massager', img: 'https://images.unsplash.com/photo-1556228724-4c7f8e3f35e1?q=80&w=800&auto=format&fit=crop', supplierCost: 24.50, price: 0, supplierLink: 'https://example.com/supplier/neck-massager', popularity: 84 },
+      { id: 'GUNM-022', title: 'Mini Massage Gun', img: 'https://images.unsplash.com/photo-1604594849809-dfedbc827105?q=80&w=800&auto=format&fit=crop', supplierCost: 29.90, price: 0, supplierLink: 'https://example.com/supplier/massage-gun-mini', popularity: 88 },
+      { id: 'TAGC-023', title: 'Cute AirTag Case', img: 'https://images.unsplash.com/photo-1617952081972-611a7a2e4a1a?q=80&w=800&auto=format&fit=crop', supplierCost: 3.80, price: 0, supplierLink: 'https://example.com/supplier/airtag-case', popularity: 79 },
+      { id: 'AFYL-024', title: 'Silicone Air Fryer Liners', img: 'https://images.unsplash.com/photo-1514511547117-f9c9ae8b209e?q=80&w=800&auto=format&fit=crop', supplierCost: 6.40, price: 0, supplierLink: 'https://example.com/supplier/air-fryer-liners', popularity: 85 },
+      { id: 'SHPR-025', title: 'Shoe Crease Protectors', img: 'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800&auto=format&fit=crop', supplierCost: 4.90, price: 0, supplierLink: 'https://example.com/supplier/crease-protectors', popularity: 82 },
+    ];
+
+    // Initialize prices based on default margin if not set
+    function computePrice(cost, marginPct) {
+      return Math.round((cost * (1 + marginPct / 100)) * 100) / 100;
+    }
+
+    function initPrices() {
+      const pct = Number(document.getElementById('defaultMargin').value || state.defaultMarginPct);
+      products.forEach(p => {
+        if (!p.price || p.price <= 0) p.price = computePrice(p.supplierCost, pct);
+      });
+    }
+
+    // Render helpers
+    function money(n) { return `$${n.toFixed(2)}`; }
+
+    function renderProducts(list) {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      list.forEach(p => {
+        const margin = p.price - p.supplierCost;
+        const el = document.createElement('div');
+        el.className = 'card bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm transition-transform';
+        el.innerHTML = `
+          <div class="aspect-[4/3] bg-neutral-100 overflow-hidden">
+            <img src="${p.img}" alt="${p.title}" class="w-full h-full object-cover" loading="lazy"/>
+          </div>
+          <div class="p-4 space-y-2">
+            <div class="flex items-start justify-between gap-3">
+              <h4 class="font-semibold leading-snug">${p.title}</h4>
+              <span class="text-sm rounded-full bg-neutral-100 px-2 py-1">${p.id}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-lg font-bold">${money(p.price)}</div>
+                <div class="text-xs text-neutral-500">Cost ${money(p.supplierCost)} • Profit ${money(margin)}</div>
+              </div>
+              <button data-id="${p.id}" class="addToCart rounded-xl bg-black text-white px-4 py-2 text-sm font-medium">Add</button>
+            </div>
+            <div class="text-xs text-neutral-500 truncate"><a class="underline" href="${p.supplierLink}" target="_blank" rel="noopener">Supplier link</a></div>
+          </div>
+        `;
+        grid.appendChild(el);
+      });
+      document.getElementById('visibleCount').textContent = `(${list.length} items)`;
+      document.querySelectorAll('.addToCart').forEach(btn => btn.addEventListener('click', onAddToCart));
+    }
+
+    function onAddToCart(e) {
+      const id = e.currentTarget.getAttribute('data-id');
+      const item = products.find(p => p.id === id);
+      const existing = state.cart.find(ci => ci.id === id);
+      if (existing) existing.qty += 1; else state.cart.push({ ...item, qty: 1 });
+      saveCart();
+      renderCart();
+      bumpCartCount();
+      openCart();
+    }
+
+    function bumpCartCount() {
+      const n = state.cart.reduce((a, b) => a + b.qty, 0);
+      document.getElementById('cartCount').textContent = String(n);
+    }
+
+    function saveCart() { localStorage.setItem('dropspark_cart', JSON.stringify(state.cart)); }
+    function loadCart() { state.cart = JSON.parse(localStorage.getItem('dropspark_cart') || '[]'); }
+
+    function renderCart() {
+      const wrap = document.getElementById('cartItems');
+      wrap.innerHTML = '';
+      let sub = 0, profit = 0;
+      state.cart.forEach(ci => {
+        sub += ci.price * ci.qty;
+        profit += (ci.price - ci.supplierCost) * ci.qty;
+        const row = document.createElement('div');
+        row.className = 'flex gap-3 py-3 border-b';
+        row.innerHTML = `
+          <img src="${ci.img}" class="w-16 h-16 rounded-lg object-cover" alt="${ci.title}"/>
+          <div class="flex-1">
+            <div class="font-medium">${ci.title}</div>
+            <div class="text-sm text-neutral-600">${money(ci.price)} • x <input data-id="${ci.id}" type="number" min="1" value="${ci.qty}" class="qtyInput w-16 rounded-lg border px-2 py-1 text-sm"/></div>
+            <div class="text-xs text-neutral-500"><a class="underline" href="${ci.supplierLink}" target="_blank">Supplier</a> • Cost ${money(ci.supplierCost)}</div>
+          </div>
+          <button data-id="${ci.id}" class="removeItem text-sm text-red-600">Remove</button>
+        `;
+        wrap.appendChild(row);
+      });
+      document.getElementById('subTotal').textContent = money(sub);
+      document.getElementById('profitTotal').textContent = money(profit);
+      wrap.querySelectorAll('.qtyInput').forEach(inp => inp.addEventListener('input', onQtyChange));
+      wrap.querySelectorAll('.removeItem').forEach(btn => btn.addEventListener('click', onRemoveItem));
+    }
+
+    function onQtyChange(e) {
+      const id = e.currentTarget.getAttribute('data-id');
+      const val = Math.max(1, parseInt(e.currentTarget.value || '1', 10));
+      const idx = state.cart.findIndex(ci => ci.id === id);
+      state.cart[idx].qty = val;
+      saveCart();
+      renderCart();
+      bumpCartCount();
+    }
+
+    function onRemoveItem(e) {
+      const id = e.currentTarget.getAttribute('data-id');
+      state.cart = state.cart.filter(ci => ci.id !== id);
+      saveCart();
+      renderCart();
+      bumpCartCount();
+    }
+
+    // Drawer controls
+    function openCart() { document.getElementById('cartDrawer').classList.remove('translate-x-full'); }
+    function closeCart() { document.getElementById('cartDrawer').classList.add('translate-x-full'); }
+
+    // Search + sort
+    function filterAndSort() {
+      const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      const mode = document.getElementById('sortSelect').value;
+      let list = products.filter(p => p.title.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
+      if (mode === 'priceAsc') list.sort((a,b)=>a.price-b.price);
+      else if (mode === 'priceDesc') list.sort((a,b)=>b.price-a.price);
+      else if (mode === 'marginDesc') list.sort((a,b)=>(b.price-b.supplierCost)-(a.price-a.supplierCost));
+      else list.sort((a,b)=>b.popularity-a.popularity);
+      renderProducts(list);
+    }
+
+    // Checkout helpers
+    function buildPO() {
+      const name = document.getElementById('custName').value || 'Unknown';
+      const email = document.getElementById('custEmail').value || '';
+      const address = document.getElementById('custAddress').value || '';
+      const phone = document.getElementById('custPhone').value || '';
+      const notes = document.getElementById('custNotes').value || '';
+      const lines = state.cart.map(ci => `• ${ci.id} — ${ci.title} — Qty ${ci.qty} — Cost ${money(ci.supplierCost)} — Link: ${ci.supplierLink}`);
+      const subtotal = state.cart.reduce((s, ci) => s + ci.price*ci.qty, 0);
+      const cost = state.cart.reduce((s, ci) => s + ci.supplierCost*ci.qty, 0);
+      const profit = subtotal - cost;
+      return {
+        subject: `PO — ${state.storeName} — ${name}`,
+        body: [
+          `Please fulfill this order and ship to customer:`,
+          ``,
+          `Customer`,
+          `Name: ${name}`,
+          `Email: ${email}`,
+          `Phone: ${phone}`,
+          `Address: ${address}`,
+          notes ? `Notes: ${notes}` : '',
+          ``,
+          `Items`,
+          ...lines,
+          ``,
+          `Totals`,
+          `Our sell subtotal: ${money(subtotal)}`,
+          `Your invoice (cost): ${money(cost)}`,
+          ``,
+          `Please confirm tracking once shipped. Thank you!`,
+        ].filter(Boolean).join('\n')
+      };
+    }
+
+    function mailto(to, subject, body) {
+      const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = url;
+    }
+
+    function updateConfigFromInputs() {
+      state.ownerEmail = document.getElementById('ownerEmail').value || state.ownerEmail;
+      state.supplierEmail = document.getElementById('supplierEmail').value || state.supplierEmail;
+      state.defaultMarginPct = Number(document.getElementById('defaultMargin').value || state.defaultMarginPct);
+      state.storeName = document.getElementById('storeName').value || state.storeName;
+    }
+
+    // Event wiring
+    document.getElementById('openCart').addEventListener('click', openCart);
+    document.getElementById('closeCart').addEventListener('click', closeCart);
+    document.getElementById('checkoutBtn').addEventListener('click', ()=>{
+      if (state.cart.length === 0) { alert('Your cart is empty.'); return; }
+      document.getElementById('checkoutModal').classList.remove('hidden');
+      document.getElementById('checkoutModal').classList.add('flex');
+      document.getElementById('poPreview').value = buildPO().body;
+    });
+    document.getElementById('closeCheckout').addEventListener('click', ()=>{
+      document.getElementById('checkoutModal').classList.add('hidden');
+      document.getElementById('checkoutModal').classList.remove('flex');
+    });
+
+    document.getElementById('supplierEmailBtn').addEventListener('click', () => {
+      updateConfigFromInputs();
+      const po = buildPO();
+      mailto(state.supplierEmail, po.subject, po.body);
+    });
+    document.getElementById('ownerEmailBtn').addEventListener('click', () => {
+      updateConfigFromInputs();
+      const po = buildPO();
+      mailto(state.ownerEmail, `Receipt copy — ${po.subject}`, po.body + `\n\n(Profit is kept by store owner.)`);
+    });
+    document.getElementById('copyPOBtn').addEventListener('click', () => {
+      const po = buildPO();
+      const ta = document.getElementById('poPreview');
+      ta.value = po.body;
+      ta.select();
+      document.execCommand('copy');
+    });
+
+    document.getElementById('searchInput').addEventListener('input', filterAndSort);
+    document.getElementById('sortSelect').addEventListener('change', filterAndSort);
+    document.getElementById('defaultMargin').addEventListener('input', () => {
+      initPrices();
+      filterAndSort();
+    });
+
+    document.getElementById('ownerEmail').addEventListener('input', updateConfigFromInputs);
+    document.getElementById('supplierEmail').addEventListener('input', updateConfigFromInputs);
+    document.getElementById('storeName').addEventListener('input', () => {
+      updateConfigFromInputs();
+      document.title = state.storeName + ' — Trendy Finds, Fast Ship';
+    });
+
+    // Boot
+    (function boot(){
+      document.getElementById('year').textContent = new Date().getFullYear();
+      loadCart();
+      bumpCartCount();
+      initPrices();
+      filterAndSort();
+    })();
+  </script>
+</body>
+</html>
